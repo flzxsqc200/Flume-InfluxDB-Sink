@@ -175,7 +175,7 @@ private String ExtractInfluxEvent(Event event, Boolean influx_source, String tru
 	String body = new String(event.getBody());
 	//split String with "\\s+" ,and get value array.
 	String v[]=body.trim().split("\\s+");
-	//get filed name list from conf/XXX.conf file
+	//get field name list from conf/XXX.conf file
 	String n[]=fieldList.split(",");
 	/***sb is data-binary body
 	*curl -i -XPOST 'http://localhost:8086/write?db=test&u=root&p=123456' --data-binary  \
