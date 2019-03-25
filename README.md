@@ -25,17 +25,15 @@ Configuration
 Here is an example sink configuration:
 
 ```
-agent.sinks.influx.type = com.flumetest.influxdb.InfluxSink
-agent.sinks.influx.host = influx-host
-agent.sinks.influx.port = 8086
-agent.sinks.influx.username = kukta
-agent.sinks.influx.password = fafaf
-agent.sinks.influx.database = flumetest
-agent.sinks.influx.metricnamefromfield = true
-agent.sinks.influx.metricnamefield = kukta
-agent.sinks.influx.metrcivaluefromfield = value
-agent.sinks.influx.tagsfromfields = kukta,blah
-agent.sinks.influx.channel = memoryChannel
+a1.sinks.k1.type = com.flumetest.influxdb.InfluxSink
+a1.sinks.k1.host = 127.0.0.1
+a1.sinks.k1.port = 8086
+a1.sinks.k1.batchSize = 0
+a1.sinks.k1.username = root
+a1.sinks.k1.password = 123456
+a1.sinks.k1.database = test
+a1.sinks.k1.fieldList = r,b,swpd,free,buff,cache,si,so,bi,bo,in,cs,us,sy,id,wa
+a1.sinks.k1.tagList = vmid=ip:port
 ```
 The sink supports the following configuration parameters:
 ```
@@ -45,15 +43,7 @@ The sink supports the following configuration parameters:
  batchSize = The number of metrics sent simultaneously to InfluxDB, default 100 
  username = InfluxDB username, default root 
  password = InfluxDB password, default root 
- influxdatafrombody = Whether to read ready-made influxdata from the event body, default false 
- metricnamefromfield = Whether to read the metric name from a flume header, default false 
- metricnamefield = The name of the header from which to read the metric name, default "flume_metric". 
- The option is ignored if metricnamefromfield is set to false  
- metricnamefromconf = Whether to set a metric name for all the events, default "flume_metric". 
- The option is ignored if metricnamefromfield is set to true
- metrcivaluefromfield = The flume header from which to read the metric value 
- tagsfromfields = Comma separated list of flume headers that will be added as tags 
- timestampfromfield = Header name from where to read the timestamp, default "timestamp"). 
- If no fields are available a good option is to add the flume timestamp interceptor to 
+ tagList = InfluxDB taglist
+ filedList = InfluxDB value field name
  the flume source https://flume.apache.org/FlumeUserGuide.html#timestamp-interceptor 
 ```

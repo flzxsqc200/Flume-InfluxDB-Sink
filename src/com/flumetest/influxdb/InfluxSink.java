@@ -19,7 +19,7 @@ import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDBFactory;
 
 public class InfluxSink extends AbstractSink implements Configurable {
-	private static final Logger LOG = Logger.getLogger(InfluxSink.class);
+    private static final Logger LOG = Logger.getLogger(InfluxSink.class);
     private String url;
     private int batchSize;
     private String database;
@@ -35,7 +35,8 @@ public class InfluxSink extends AbstractSink implements Configurable {
     private String timestampfromfield;
     private String metricnamefield;
     private SinkCounter sinkCounter;
-    
+    private String fieldList;
+    private String tagList;
     @Override
   	public void configure(Context context) {
 	    String host = context.getString("host", "localhost");
@@ -45,13 +46,6 @@ public class InfluxSink extends AbstractSink implements Configurable {
 	    String username = context.getString("username","root");
 	    String password = context.getString("password","root");
 	    Boolean influxsource = context.getBoolean("influxdatafrombody",false);
-	    Boolean metricnamefromfield = context.getBoolean("metricnamefromfield",false);
-	    String metricnamefromconf = context.getString("metricnamefromconf","flume_metric");
-	    String metricnamefield = context.getString("metricnamefield", "flume_metric");
-	    String metricvaluefield = context.getString("metrcivaluefromfield","fieldname");
-	    String tagsfromfields = context.getString("tagsfromfields","field1,field2");
-	    String timestampfromfield = context.getString("timestampfromfield","timestamp");
-	    String truncateTimestamp = context.getString("truncateTimestamp","no");
 	    String url = "http://"+host+":"+port;
 	    this.url = url;
 	    this.batchSize = batchSize;
@@ -66,6 +60,9 @@ public class InfluxSink extends AbstractSink implements Configurable {
 	    this.tagsfromfieldslist = tagsfromfields.split(",");
 	    this.timestampfromfield = timestampfromfield;
 	    this.metricnamefield = metricnamefield;
+            this.fieldList=context.getString("fieldList",null);
+            this.tagList=context.getString("tagList",null);
+
 	    if (sinkCounter == null) {
 			sinkCounter = new SinkCounter(getName());
 		}
@@ -174,43 +171,39 @@ public class InfluxSink extends AbstractSink implements Configurable {
   }
 
 private String ExtractInfluxEvent(Event event, Boolean influx_source, String truncate_timestamp) {
-	
-	if ( influx_source ) {
-        String body = new String(event.getBody());
-        //Fix for data coming from windows
-        body = body.replaceAll("\\r","");
-       
-        
-        if ( truncate_timestamp.equals("yes")) {
-        	
-        	//Extract timestamp from message
-        	String timestamp = body.substring(body.lastIndexOf(" ")+1);
-        	String newtimestamp = timestamp.substring(0,11);
-        	body = body.replaceAll(timestamp, newtimestamp);
-        	
-        }
-        return body.toString();
-
-	}
-	else { 
-		//Will construct influxdata from events
-		Map<String, String> headers = event.getHeaders();
-		String tags ="";
-		for (int i = 0; i <= tagsfromfieldslist.length - 1; i++) {
-    			if (headers.get(tagsfromfieldslist[i]) != null) {
-    		    tags=tags+","+tagsfromfieldslist[i]+"="+headers.get(tagsfromfieldslist[i]);	
-    		    }
+	//get event resource data body.
+	String body = new String(event.getBody());
+	//split String with "\\s+" ,and get value array.
+	String v[]=body.trim().split("\\s+");
+	//get filed name list from conf/XXX.conf file
+	String n[]=fieldList.split(",");
+	/***sb is data-binary body
+	*curl -i -XPOST 'http://localhost:8086/write?db=test&u=root&p=123456' --data-binary  \
+        *	'tablename,tagname=tag value1=XXX,value2=XXX,value3=XXX'
+	*example:
+	*when sb="test,vmid=10.64.4.218_5400 r=0,b=0,swpd=0,free=437976,buff=7012,cache=716852,si=0,so=0,bi=0,bo=0,in=0,cs=1359,us=34,sy=1,id=65,wa=0"
+	*in influxdb,you can see:
+	*> select * from test;
+	*  name: test
+        *  time                b bi bo buff cache  cs free   id  in r si so swpd sy us vmid             wa
+        *  ----                - -- -- ---- -----  -- ----   --  -- - -- -- ---- -- -- ----             --
+        *  1553490725748307650 0 0  0  5320 638840 30 799568 100 0  0 0  0  0    0  0  10.64.4.218_5400 0
+        *  1553490725885754400 0 0  0  5320 638840 30 799568 100 0  0 0  0  0    0  0  10.64.4.218_5400 0
+	***/
+	StringBuilder sb= new StringBuilder("test,");
+	sb.append(tagList);
+	// thw whiespace  seperate tag from value.
+	sb.append(" ");
+	for(int i=0;i<n.length;i++){
+		sb.append(n[i]);
+		sb.append("=");
+		sb.append(v[i]);
+		if(i<n.length-1)
+		sb.append(",");
 		}
-		if ( metricnamefromfield) {
-
-			return headers.get(metricnamefield)+tags+" value="+headers.get(metricvaluefield)+" "+headers.get(timestampfromfield);
-		}
-		else {
-			return metricnamefromconf+tags+" value="+headers.get(metricvaluefield)+" "+headers.get(timestampfromfield);
-		}
-	
-			
-}
-
+	//flume log may only display 16 bytes,so you can use system print function or change flume limit.
+	LOG.debug(sb.toString());
+	return sb.toString();
 }
 }
+
