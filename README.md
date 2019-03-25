@@ -47,3 +47,19 @@ The sink supports the following configuration parameters:
  filedList = InfluxDB value field name
  the flume source https://flume.apache.org/FlumeUserGuide.html#timestamp-interceptor 
 ```
+  example:
+```
+/***sb is data-binary body
+	*curl -i -XPOST 'http://localhost:8086/write?db=test&u=root&p=123456' --data-binary  \
+        *	'tablename,tagname=tag value1=XXX,value2=XXX,value3=XXX'
+	*example:
+	*when sb="test,vmid=10.64.4.218_5400 r=0,b=0,swpd=0,free=437976,buff=7012,cache=716852,si=0,so=0,bi=0,bo=0,in=0,cs=1359,us=34,sy=1,id=65,wa=0"
+	*in influxdb,you can see:
+	*> select * from test;
+	*  name: test
+        *  time                b bi bo buff cache  cs free   id  in r si so swpd sy us vmid             wa
+        *  ----                - -- -- ---- -----  -- ----   --  -- - -- -- ---- -- -- ----             --
+        *  1553490725748307650 0 0  0  5320 638840 30 799568 100 0  0 0  0  0    0  0  10.64.4.218_5400 0
+        *  1553490725885754400 0 0  0  5320 638840 30 799568 100 0  0 0  0  0    0  0  10.64.4.218_5400 0
+	***/
+ ```
